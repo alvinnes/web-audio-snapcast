@@ -1,16 +1,38 @@
+<div align="center">
+
 # 🖥️ Konfigurasi Snapserver
 
-Dokumen ini menjelaskan langkah-langkah instalasi dan konfigurasi **MPD**, **Samba**, dan **Snapserver** di Armbian sebagai sisi server pada sistem audio streaming Snapcast.
+<p>
+  <img src="https://img.shields.io/badge/Role-Server-blue?style=flat-square" />
+  <img src="https://img.shields.io/badge/OS-Armbian-E95420?style=flat-square&logo=linux&logoColor=white" />
+  <img src="https://img.shields.io/badge/Service-MPD%20%2B%20Snapserver-1DB954?style=flat-square" />
+</p>
+
+</div>
 
 > ⬅️ [Kembali ke README](../README.md)
 
 ***
 
+## 📋 Ringkasan Langkah
+
+```
+① Update Repo  →  ② Install Paket  →  ③ Set Permission
+      ↓
+④ Konfigurasi Samba  →  ⑤ Transfer Musik  →  ⑥ Konfigurasi MPD
+      ↓
+⑦ Konfigurasi Snapserver  →  ⑧ Test MPC  →  ⑨ Buat Service
+      ↓
+⑩ Jalankan Web App  ✅
+```
+
+***
+
 ## Langkah-Langkah Konfigurasi
 
-### 1. Update Repository
+### 1️⃣ Update Repository
 
-Masuk ke sistem Armbian menggunakan user **Root** melalui SSH atau akses langsung, lalu lakukan pembaruan repository:
+Masuk ke sistem Armbian menggunakan user **Root** melalui SSH atau akses langsung:
 
 ```bash
 apt-get update
@@ -20,38 +42,39 @@ Tunggu hingga proses selesai.
 
 ***
 
-### 2. Instalasi Paket
+### 2️⃣ Instalasi Paket
 
-Install paket yang dibutuhkan untuk menjalankan MPD, Samba, dan Snapserver:
+Install semua paket yang dibutuhkan sekaligus:
 
 ```bash
 apt-get install mpd snapserver samba
 ```
 
-Setelah instalasi selesai, buat direktori khusus untuk menyimpan file musik:
+Setelah selesai, buat direktori untuk menyimpan file musik:
 
 ```bash
 mkdir /etc/music
 ```
 
-> 💡 Direktori lain bisa digunakan selama konsisten dengan konfigurasi MPD. Namun disarankan samakan saja dengan contoh di atas agar tidak kebingungan.
+> [!TIP]
+> Direktori lain bisa digunakan selama konsisten dengan konfigurasi MPD.
+> Namun disarankan **samakan saja** dengan contoh di atas agar tidak kebingungan.
 
 ***
 
-### 3. Atur Permission Direktori Musik
-
-Atur permission agar direktori `/etc/music` dapat diakses oleh service MPD:
+### 3️⃣ Atur Permission Direktori Musik
 
 ```bash
 chown -R mpd:audio /etc/music
 chmod -R 775 /etc/music
 ```
 
-> ⚠️ **Perintahnya wajib sama persis seperti di atas!**
+> [!CAUTION]
+> **Perintahnya wajib sama persis seperti di atas!**
 
 ***
 
-### 4. Konfigurasi Samba
+### 4️⃣ Konfigurasi Samba
 
 Buka file konfigurasi Samba:
 
@@ -70,9 +93,10 @@ Tambahkan konfigurasi berikut di **baris paling bawah** file:
    force user = root
 ```
 
-> ⚠️ **Konfigurasi ini wajib sama persis seperti di atas!**
+> [!CAUTION]
+> **Konfigurasi ini wajib sama persis seperti di atas!**
 
-Simpan dengan **CTRL + O**, lalu **Enter**. Setelah itu restart Samba:
+Simpan dengan **`CTRL + O`** → **`Enter`**, lalu restart Samba:
 
 ```bash
 systemctl restart smbd
@@ -80,19 +104,24 @@ systemctl restart smbd
 
 ***
 
-### 5. Transfer File Musik via Samba
+### 5️⃣ Transfer File Musik via Samba
 
-Dari Laptop atau Komputer Windows, buka **Windows + R**, ketik IP server:
+Dari Laptop atau Komputer Windows:
 
-```
-\\172.16.100.238
-```
+1. Tekan **`Windows + R`**
 
-Cari folder bernama **music**, lalu pindahkan file lagu yang dimiliki ke dalam folder tersebut.
+2. Ketik IP server, contoh:
+   ```
+   \\172.16.100.238
+   ```
+
+3. Cari folder bernama **`music`**
+
+4. Pindahkan file lagu dari komputer ke dalam folder tersebut
 
 ***
 
-### 6. Konfigurasi MPD
+### 6️⃣ Konfigurasi MPD
 
 Buka file konfigurasi MPD:
 
@@ -113,21 +142,17 @@ state_file          "/var/lib/mpd/state"
 bind_to_address     "127.0.0.1"
 
 audio_output {
-    type  "fifo"
-    name  "snapcast"
-    path  "/tmp/snapfifo"
-    format "48000:16:2"
-    mixer_type "null"
+    type       "fifo"
+    name       "snapcast"
+    path       "/tmp/snapfifo"
+    format     "48000:16:2"
 }
 ```
 
-> ⚠️ **Konfigurasi ini wajib sama persis seperti di atas!**
+> [!CAUTION]
+> **Konfigurasi ini wajib sama persis seperti di atas!**
 
-Simpan dengan **CTRL + O**, lalu **Enter**.
-
-***
-
-### 7. Restart MPD
+Simpan dengan **`CTRL + O`** → **`Enter`**, lalu restart MPD:
 
 ```bash
 systemctl restart mpd.service
@@ -135,7 +160,7 @@ systemctl restart mpd.service
 
 ***
 
-### 8. Konfigurasi Snapserver
+### 7️⃣ Konfigurasi Snapserver
 
 Buka file konfigurasi Snapserver:
 
@@ -143,16 +168,18 @@ Buka file konfigurasi Snapserver:
 nano /etc/snapserver.conf
 ```
 
-Cari bagian stream dan sesuaikan konfigurasinya (hapus tanda `#` jika ada):
+Cari bagian `[stream]` dan sesuaikan (hapus tanda `#` jika ada):
 
 ```ini
 [stream]
 stream = pipe:///tmp/snapfifo?name=default&sampleformat=48000:16:2&codec=pcm
 ```
 
-> ⚠️ **Konfigurasi ini wajib sama persis seperti di atas! Urutan baris di file ini tidak selalu sama, cari bagian yang sesuai satu per satu.**
+> [!CAUTION]
+> **Konfigurasi ini wajib sama persis seperti di atas!**
+> Urutan baris di file ini tidak selalu sama — cari bagian yang sesuai **satu per satu**.
 
-Simpan dengan **CTRL + O**, lalu **Enter**. Kemudian restart Snapserver:
+Simpan dengan **`CTRL + O`** → **`Enter`**, lalu restart Snapserver:
 
 ```bash
 systemctl restart snapserver
@@ -160,7 +187,7 @@ systemctl restart snapserver
 
 ***
 
-### 9. Pengujian MPD dengan MPC
+### 8️⃣ Pengujian MPD dengan MPC
 
 Install paket `mpc`:
 
@@ -177,13 +204,16 @@ mpc add /
 mpc play
 ```
 
-> ⚠️ **Wajib memasukkan perintah dari `mpc update` sampai `mpc play` secara berurutan.**
+> [!IMPORTANT]
+> Wajib memasukkan perintah dari `mpc update` sampai `mpc play` **secara berurutan dari atas ke bawah**.
 
 ***
 
-### 10. Konfigurasi Service Paging (audio-paging.service)
+### 9️⃣ Konfigurasi Service Paging
 
-Buat service untuk fitur paging (Public Address System):
+**Paging** adalah sistem penyiaran pengumuman suara satu arah dari server ke banyak speaker client secara bersamaan.
+
+Buat file service:
 
 ```bash
 nano /etc/systemd/system/audio-paging.service
@@ -206,9 +236,10 @@ User=root
 WantedBy=multi-user.target
 ```
 
-> ⚠️ **Konfigurasi ini wajib sama persis seperti pada gambar di dokumentasi asli!**
+> [!CAUTION]
+> **Konfigurasi ini wajib sama persis seperti pada gambar di dokumentasi asli!**
 
-Simpan dengan **CTRL + O**, lalu **Enter**. Kemudian aktifkan service:
+Simpan, lalu aktifkan service:
 
 ```bash
 systemctl daemon-reload
@@ -218,17 +249,18 @@ systemctl start audio-paging.service
 
 ***
 
-### 11. Konfigurasi Service Musik Background (audio-music.service)
+### 🔟 Konfigurasi Service Musik Background
 
-Buat service untuk menjalankan musik di latar belakang:
+Buat satu service lagi untuk musik background:
 
 ```bash
 nano /etc/systemd/system/audio-music.service
 ```
 
-> ⚠️ **Konfigurasi ini wajib sama persis seperti pada gambar di dokumentasi asli!**
+> [!CAUTION]
+> **Konfigurasi ini wajib sama persis seperti pada gambar di dokumentasi asli!**
 
-Setelah dikonfigurasi, aktifkan service:
+Aktifkan service:
 
 ```bash
 systemctl daemon-reload
@@ -238,7 +270,7 @@ systemctl start audio-music.service
 
 ***
 
-### 12. Menjalankan Web App
+### 1️⃣1️⃣ Menjalankan Web App
 
 Pindahkan folder website ke `/opt/`:
 
@@ -247,7 +279,7 @@ mv /etc/music/web-audio /opt/web-audio
 cd /opt/web-audio
 ```
 
-Install Python dan jalankan:
+Install Python dan jalankan aplikasi:
 
 ```bash
 sudo apt install python3 python3-venv python3-pip -y
@@ -255,8 +287,25 @@ source .venv/bin/activate
 python3 app.py
 ```
 
-Buka browser dan akses `http://<IP_SERVER>:5000`. Jika muncul tampilan website, lakukan pengujian upload lagu, play lagu, dan fitur lainnya.
+> [!IMPORTANT]
+> Di dalam folder project terdapat beberapa file script Python seperti `music.py`.
+> **Abaikan semua file tersebut.**
+> Satu-satunya file yang perlu dijalankan adalah **`app.py`**.
+
+Buka browser dan akses:
+
+```
+http://<IP_SERVER>:5000
+```
+
+Lakukan pengujian upload lagu, play lagu, dan fitur lainnya.
 
 ***
 
-> ✅ Jika semua fitur sudah bisa berjalan, konfigurasi Snapserver selesai. Lanjutkan ke **[Konfigurasi Snapclient](./snapclient.md)**.
+<div align="center">
+
+> ✅ **Konfigurasi Snapserver selesai!**
+>
+> Lanjutkan ke **[🔊 Konfigurasi Snapclient →](./snapclient.md)**
+
+</div>
