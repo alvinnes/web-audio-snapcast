@@ -23,13 +23,13 @@
 
 </div>
 
-***
+---
 
 > [!WARNING]
 > Sebelum membaca dokumentasi ini, pastikan kalian sudah membaca **Dokumentasi Instalasi Armbian** terlebih dahulu.
 > [📄 Klik di sini untuk membaca Dokumentasi Instalasi Armbian](https://docs.google.com/document/d/15V6Q-O73UdcTIVRZ8_yipzSrp0qxL2ZS/edit?usp=drive_link&ouid=118088395299377037506&rtpof=true&sd=true)
 
-***
+---
 
 ## 📋 Daftar Isi
 
@@ -42,7 +42,7 @@
 - [Kelebihan & Kekurangan](#-kelebihan--kekurangan)
 - [Teknologi](#-teknologi-yang-digunakan)
 
-***
+---
 
 ## 📖 Pendahuluan
 
@@ -50,7 +50,7 @@ Sistem ini menggunakan **Music Player Daemon (MPD)** sebagai sumber audio, **Sna
 
 Audio dari MPD diteruskan ke **FIFO pipe**, lalu dibaca oleh Snapserver untuk dikirim ke client melalui jaringan, kemudian diputar melalui **ALSA** ke perangkat audio tujuan.
 
-***
+---
 
 ## ⚙️ Cara Kerja Sistem
 
@@ -83,7 +83,7 @@ Audio dari MPD diteruskan ke **FIFO pipe**, lalu dibaca oleh Snapserver untuk di
 └─────────────────┘      └─────────────────┘
 ```
 
-***
+---
 
 ## ✅ Prerequisite
 
@@ -121,7 +121,7 @@ Audio dari MPD diteruskan ke **FIFO pipe**, lalu dibaca oleh Snapserver untuk di
   </tr>
 </table>
 
-***
+---
 
 ## 📁 Struktur Project
 
@@ -130,8 +130,12 @@ web-audio/
 ├── 📄 app.py               ← ✅ FILE UTAMA — jalankan ini
 ├── 📄 requirements.txt     ← Daftar dependency Python
 ├── 📁 templates/           ← File HTML halaman web
-├── 📁 static/              ← File CSS, JS, gambar
-└── 📄 *.py (lainnya)       ← ⛔ Abaikan file ini
+├── 📁 scripts/              ← File CSS, JS, gambar
+├── 📄 README.md             ← Dokumentasi proyek
+├── 📁 docs/               ← Dokumentasi detail konfigurasi dan panduan
+│   ├── 📄 snapserver.md   ← Panduan instalasi & konfigurasi Snapserver di Armbian Server
+│   ├── 📄 snapclient.md   ← Panduan instalasi & konfigurasi Snapclient di Armbian Client
+│__ └── 📄 code-guide.md     ← Panduan lengkap isi kode app.py (fungsi, variabel, endpoint)
 ```
 
 > [!IMPORTANT]
@@ -139,9 +143,9 @@ web-audio/
 > **Abaikan semua file tersebut.** File yang perlu dijalankan hanyalah **`app.py`**.
 > Jangan menjalankan script lain kecuali diminta secara khusus dalam dokumentasi ini.
 
-***
+---
 
-## 🚀 Cara Menjalankan Web App
+## 🚀 Cara Menjalankan Web App di Armbian Server
 
 **① Clone repository**
 
@@ -177,17 +181,17 @@ python3 app.py
 http://<IP_SERVER>:5000
 ```
 
-***
+---
 
 ## 📚 Dokumentasi
 
-| No | Dokumen | Deskripsi |
-|:--:|---------|-----------|
-| 1 | [🖥️ Konfigurasi Snapserver](./docs/snapserver.md) | Instalasi & konfigurasi MPD, Samba, Snapserver, dan Web App di Armbian Server |
-| 2 | [🔊 Konfigurasi Snapclient](./docs/snapclient.md) | Instalasi & konfigurasi Snapclient beserta pengaturan audio di Armbian Client |
-| 3 | [🗂️ Panduan Kode app.py](./docs/code-guide.md) | Peta seluruh fungsi dan endpoint di app.py — panduan jika ingin mengubah sesuatu di kode |
+| No  | Dokumen                                           | Deskripsi                                                                                |
+| :-: | ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+|  1  | [🖥️ Konfigurasi Snapserver](./docs/snapserver.md) | Instalasi & konfigurasi MPD, Samba, Snapserver, dan Web App di Armbian Server            |
+|  2  | [🔊 Konfigurasi Snapclient](./docs/snapclient.md) | Instalasi & konfigurasi Snapclient beserta pengaturan audio di Armbian Client            |
+|  3  | [🗂️ Panduan Kode app.py](./docs/code-guide.md)    | Peta seluruh fungsi dan endpoint di app.py — panduan jika ingin mengubah sesuatu di kode |
 
-***
+---
 
 ## ⚖️ Kelebihan & Kekurangan
 
@@ -218,7 +222,7 @@ http://<IP_SERVER>:5000
   </tr>
 </table>
 
-***
+---
 
 ## 🛠️ Teknologi yang Digunakan
 
@@ -232,7 +236,7 @@ http://<IP_SERVER>:5000
   <img src="https://img.shields.io/badge/Armbian-Linux-E95420?style=flat-square&logo=linux&logoColor=white" />
 </p>
 
-***
+---
 
 <div align="center">
 
