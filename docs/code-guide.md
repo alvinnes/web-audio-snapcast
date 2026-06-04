@@ -1,5 +1,3 @@
-<div align="center">
-
 # 🗂️ Panduan Kode — app.py
 
 <p>
@@ -15,7 +13,7 @@ Panduan ini menjelaskan **letak bagian kode** di `app.py` agar kamu tahu harus m
 
 > ⬅️ [Kembali ke README](../README.md)
 
-***
+---
 
 ## 📋 Daftar Isi
 
@@ -25,7 +23,7 @@ Panduan ini menjelaskan **letak bagian kode** di `app.py` agar kamu tahu harus m
 - [Panduan Ubah per Fitur](#-panduan-ubah-per-fitur)
 - [Referensi API Endpoint](#-referensi-api-endpoint)
 
-***
+---
 
 ## ⚙️ Konfigurasi Utama
 
@@ -33,7 +31,7 @@ Semua **variabel yang perlu disesuaikan** ada di bagian paling atas `app.py`, se
 
 ```python
 # ── Lokasi folder musik ──────────────────────────────────
-MUSIC_FOLDER = "/etc/musics"          # ← Ubah jika folder musik berbeda
+MUSIC_FOLDER = "/etc/music"          # ← Ubah jika folder musik berbeda
 
 # ── Koneksi Snapserver ───────────────────────────────────
 SNAPSERVER_HOST = "127.0.0.1"         # ← Ubah jika Snapserver di host lain
@@ -52,11 +50,14 @@ CLIENT_MAC_ID    = "00:15:18:01:81:31"                      # ← MAC Address cl
 > Jika ganti STB atau install ulang, kedua ID ini harus diperbarui.
 > Cara cek ID: akses endpoint `/clients` di browser → `http://IP_SERVER:5000/clients`
 
-***
+> [!NOTE]
+> Folder musik yang dipakai di dokumentasi server sekarang adalah **`/etc/music`** dan harus sama dengan `MUSIC_FOLDER` di atas.
+
+---
 
 ## 🔄 Alur Kerja Sistem
 
-```
+```text
 Browser / User
      │
      │  HTTP Request
@@ -65,7 +66,7 @@ Browser / User
 │                   app.py (Flask)                │
 │                                                 │
 │  Route Handler  ──►  Helper Function            │
-│  (misal /play)        (run_cmd, snapcast_rpc)   │
+│  (misal /play)       (run_cmd, snapcast_rpc)    │
 └───────────┬──────────────────┬──────────────────┘
             │                  │
             ▼                  ▼
@@ -73,15 +74,15 @@ Browser / User
      │   MPC   │        │  Snapserver  │
      │ (shell) │        │  (JSON-RPC)  │
      └────┬────┘        └──────┬───────┘
-          │                    │
-          ▼                    ▼
+          │                   │
+          ▼                   ▼
      ┌─────────┐        ┌──────────────┐
      │   MPD   │        │  Snapclient  │
      │ (audio) │        │  (speaker)   │
      └─────────┘        └──────────────┘
 ```
 
-***
+---
 
 ## 🗺️ Peta Fungsi
 
@@ -105,7 +106,7 @@ Fungsi-fungsi ini **tidak bisa diakses dari browser**, hanya dipanggil oleh fung
 | `snapcast_rpc(method, params)` | Mengirim perintah ke Snapserver via JSON-RPC (TCP socket) | Ingin ganti cara komunikasi ke Snapserver |
 | `list_snapclients()` | Mengambil daftar semua Snapclient yang terhubung ke server | — |
 
-***
+---
 
 ### 🌐 Route Handlers (Endpoint API)
 
@@ -128,7 +129,7 @@ Fungsi-fungsi ini **bisa diakses dari browser atau JavaScript**.
 | `GET /paging/on` | `paging_on()` | Aktifkan mode paging (mic siaran) |
 | `GET /paging/off` | `paging_off()` | Matikan mode paging, kembali ke musik |
 
-***
+---
 
 ## 🛠️ Panduan Ubah per Fitur
 
@@ -137,13 +138,13 @@ Fungsi-fungsi ini **bisa diakses dari browser atau JavaScript**.
 Cari di bagian **konfigurasi utama** (baris atas `app.py`):
 
 ```python
-MUSIC_FOLDER = "/etc/musics"   # ← Ganti path di sini
+MUSIC_FOLDER = "/etc/music"   # ← Ganti path di sini
 ```
 
 > [!TIP]
 > Pastikan path yang baru memiliki permission yang benar dan konsisten dengan konfigurasi MPD di `/etc/mpd.conf`.
 
-***
+---
 
 ### 🔊 Ingin mengubah volume default saat aplikasi pertama dijalankan?
 
@@ -151,7 +152,7 @@ MUSIC_FOLDER = "/etc/musics"   # ← Ganti path di sini
 current_volume = 50   # ← Ganti angka ini (0–100)
 ```
 
-***
+---
 
 ### 🎵 Ingin menambahkan support format audio selain MP3/WAV?
 
@@ -171,7 +172,7 @@ Contoh — tambahkan `.flac` dan `.ogg`:
 if f.lower().endswith((".mp3", ".wav", ".flac", ".ogg"))
 ```
 
-***
+---
 
 ### 🎤 Ingin mengubah volume saat paging aktif?
 
@@ -184,7 +185,7 @@ snapcast_rpc("Client.SetVolume", {
 })
 ```
 
-***
+---
 
 ### ⏱️ Ingin mengubah seberapa sering status di-refresh di browser?
 
@@ -194,7 +195,7 @@ Cari di bagian `<script>` dalam fungsi `index()`:
 setInterval(refreshStatus, 2000);   // ← 2000 = setiap 2 detik, ubah sesuai kebutuhan
 ```
 
-***
+---
 
 ### 🎨 Ingin mengubah tampilan UI (warna tombol, layout, dll)?
 
@@ -211,9 +212,10 @@ html_template = f"""
   .paging {{ background: red; color: white; }}    /* Tombol Paging   */
   .random {{ background: orange; color: white; }} /* Tombol Random   */
 </style>
+"""
 ```
 
-***
+---
 
 ### 🆔 Ingin mengubah target Group/Client Snapcast?
 
@@ -226,13 +228,13 @@ CLIENT_MAC_ID    = "00:15:18:01:81:31"                      # ← MAC baru
 
 Untuk mencari ID yang benar, buka browser dan akses:
 
-```
+```text
 http://<IP_SERVER>:5000/clients
 ```
 
 Akan muncul JSON berisi semua client yang terhubung beserta ID-nya.
 
-***
+---
 
 ### 🔌 Ingin mengubah port aplikasi web?
 
@@ -243,7 +245,7 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)   # ← Ganti 5000 ke port lain
 ```
 
-***
+---
 
 ## 🔗 Referensi API Endpoint
 
@@ -264,7 +266,7 @@ Semua endpoint bisa diakses langsung dari browser atau `curl` untuk keperluan pe
 | `GET /prev` | `http://IP:5000/prev` | Lagu sebelumnya |
 | `GET /random` | `http://IP:5000/random` | Putar lagu acak |
 
-***
+---
 
 <div align="center">
 

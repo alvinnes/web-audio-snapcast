@@ -1,5 +1,3 @@
-<div align="center">
-
 # 🖥️ Konfigurasi Snapserver
 
 <p>
@@ -8,7 +6,7 @@
   <img src="https://img.shields.io/badge/Service-MPD%20%2B%20Snapserver-1DB954?style=for-the-badge" />
 </p>
 
-<p><i>Panduan konfigurasi sisi server — MPD, Samba, Snapserver, dan Web App di atas Armbian</i></p>
+<p><i>Panduan konfigurasi sisi server — MPD, Snapserver, dan Web App di atas Armbian</i></p>
 
 </div>
 
@@ -23,7 +21,7 @@
 ```text
 ① Update Repo  →  ② Install Paket + Buat Direktori  →  ③ Set Permission
       ↓
-④ Konfigurasi Samba  →  ⑤ Transfer Musik via Samba  →  ⑥ Konfigurasi MPD
+④ Install OpenSSH  →  ⑤ Transfer Musik via SFTP (FileZilla)  →  ⑥ Konfigurasi MPD
       ↓
 ⑦ Restart MPD  →  ⑧ Konfigurasi Snapserver  →  ⑨ Restart Snapserver
       ↓
@@ -48,10 +46,10 @@ apt-get update
 
 ### 2️⃣ Instalasi Paket dan Buat Direktori Musik
 
-Setelah repository diperbarui, **instal paket** yang dibutuhkan untuk menjalankan MPD, Samba, dan Snapserver dengan perintah berikut:
+Setelah repository diperbarui, **instal paket** yang dibutuhkan untuk menjalankan MPD dan Snapserver dengan perintah berikut:
 
 ```bash
-apt-get install mpd snapserver samba
+apt-get install mpd snapserver
 ```
 
 Setelah proses instalasi selesai, buat direktori khusus untuk menyimpan file musik yang akan diputar oleh server. Pada contoh ini, direktori yang digunakan adalah **/etc/music**, namun direktori lain juga bisa digunakan selama **konsisten** dengan konfigurasi MPD. **Tapi jika tidak ingin pusing samakan saja dengan punya saya**.
@@ -76,40 +74,49 @@ chmod -R 775 /etc/music
 
 ---
 
-### 4️⃣ Konfigurasi Samba untuk Transfer File Musik
+### 4️⃣ Persiapan Transfer File via SFTP (FileZilla)
 
-Selanjutnya, **pindahkan** file musik dari laptop ke server. Untuk mempermudah proses transfer file, digunakan **Samba** sebagai media berbagi folder.
+Selanjutnya, **pindahkan** file musik dari laptop ke server. Untuk mempermudah proses transfer file, digunakan **FileZilla** dengan protokol **SFTP** sebagai media transfer. SFTP lebih stabil dan aman dibanding Samba, serta tidak memerlukan konfigurasi tambahan di sisi server karena berjalan di atas SSH yang sudah aktif di Armbian secara default.
 
-Setelah Samba terpasang, buka file konfigurasi dengan perintah berikut:
-
-```bash
-nano /etc/samba/smb.conf
-```
-
-Pada file ini di **baris paling bawah**, lakukan pengaturan share folder sesuai konfigurasi yang sudah ditentukan:
-
-```ini
-[music]
-   path = /etc/music
-   browseable = yes
-   writeable = yes
-   guest ok = yes
-```
-
-> [!CAUTION]
-> **KONFIGURASINYA WAJIB SAMA DENGAN YANG ADA DI ATAS!!**
-
-Setelah selesai, **simpan file** konfigurasi dengan menekan **CTRL + O**, lalu tekan **Enter** untuk menyimpan perubahan. Setelah itu, restart service Samba agar konfigurasi baru diterapkan.
+Sebelum melakukan transfer, pastikan service **SSH** sudah berjalan di Armbian Server. Cek statusnya dengan perintah berikut:
 
 ```bash
-systemctl restart smbd
+systemctl status ssh
 ```
+
+Jika status menunjukkan **active (running)**, maka SSH sudah siap digunakan. Jika belum aktif, jalankan perintah berikut untuk mengaktifkannya:
+
+```bash
+systemctl enable ssh
+systemctl start ssh
+```
+
+> [!NOTE]
+> Armbian umumnya sudah mengaktifkan SSH secara default. Pastikan juga kalian sudah mengetahui **IP address** dari Armbian Server dengan perintah `ip a`.
+
+Jika belum memiliki **FileZilla**, download terlebih dahulu di:
+
+👉 [**https://filezilla-project.org/download.php**](https://filezilla-project.org/download.php)
 
 ---
 
-### 5️⃣ Transfer File Musik ke Server
+### 5️⃣ Transfer File Musik ke Server via FileZilla
 
-Setelah Samba di-restart, masuk ke **Laptop atau Komputer** anda lalu klik tombol **Windows + R**, lalu ketik IP dari Armbian Server anda, misal punya saya **\\\\172.16.100.178**, lalu Enter. Setelah itu coba kalian lihat apakah ada **folder** bernama **music** atau tidak. Jika sudah ada, **pindahkan** lagu yang kalian miliki di Laptop atau Komputer kalian ke dalam folder music itu.
+Setelah FileZilla terinstall di Laptop atau Komputer anda, buka aplikasi FileZilla dan isi kolom koneksi di bagian atas seperti berikut:
+
+| Field | Nilai |
+|:------|:------|
+| **Host** | `sftp://IP_SERVER` (contoh: `sftp://172.16.100.178`) |
+| **Username** | `root` |
+| **Password** | Password root Armbian kalian |
+| **Port** | `22` |
+
+Setelah diisi, klik tombol **Quickconnect**. Jika berhasil terhubung, panel sebelah kanan akan menampilkan isi folder dari Armbian Server.
+
+Navigasikan panel kanan ke direktori **/etc/music**, kemudian **drag and drop** file musik dari panel kiri (Laptop) ke panel kanan (Server). Tunggu hingga proses transfer selesai.
+
+> [!TIP]
+> Jika muncul peringatan **"Unknown host key"** saat pertama kali konek, klik **OK** atau **Always trust** untuk melanjutkan.
 
 ---
 
