@@ -3,143 +3,138 @@
 # 🖥️ Konfigurasi Snapserver
 
 <p>
-  <img src="https://img.shields.io/badge/Role-Server-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/OS-Armbian-E95420?style=flat-square&logo=linux&logoColor=white" />
-  <img src="https://img.shields.io/badge/Service-MPD%20%2B%20Snapserver-1DB954?style=flat-square" />
+  <img src="https://img.shields.io/badge/Role-Server-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/OS-Armbian-E95420?style=for-the-badge&logo=linux&logoColor=white" />
+  <img src="https://img.shields.io/badge/Service-MPD%20%2B%20Snapserver-1DB954?style=for-the-badge" />
 </p>
+
+<p><i>Panduan konfigurasi sisi server — MPD, Samba, Snapserver, dan Web App di atas Armbian</i></p>
 
 </div>
 
+<br>
+
 > ⬅️ [Kembali ke README](../README.md)
 
-***
+---
 
 ## 📋 Ringkasan Langkah
 
-```
-① Update Repo  →  ② Install Paket  →  ③ Set Permission
+```text
+① Update Repo  →  ② Install Paket + Buat Direktori  →  ③ Set Permission
       ↓
-④ Konfigurasi Samba  →  ⑤ Transfer Musik  →  ⑥ Konfigurasi MPD
+④ Konfigurasi Samba  →  ⑤ Transfer Musik via Samba  →  ⑥ Konfigurasi MPD
       ↓
-⑦ Konfigurasi Snapserver  →  ⑧ Test MPC  →  ⑨ Buat Service
+⑦ Restart MPD  →  ⑧ Konfigurasi Snapserver  →  ⑨ Restart Snapserver
       ↓
-⑩ Jalankan Web App  ✅
+⑩ Install MPC + Test Playback  →  ⑪ Konfigurasi Paging Service
+      ↓
+⑫ Konfigurasi Music Service  →  ⑬ Clone & Jalankan Web App  ✅
 ```
 
-***
+---
 
 ## Langkah-Langkah Konfigurasi
 
 ### 1️⃣ Update Repository
 
-Masuk ke sistem Armbian menggunakan user **Root** melalui SSH atau akses langsung:
+Setelah Armbian terpasang pada server dan client, konfigurasi dimulai dari sisi **server** terlebih dahulu. Pada tahap awal, **masuk** ke sistem Armbian menggunakan user **Root** melalui **SSH** atau **akses langsung** sesuai kebutuhan. Setelah berhasil masuk, lakukan **pembaruan repository** dengan perintah berikut, lalu tunggu hingga proses selesai.
 
 ```bash
 apt-get update
 ```
 
-Tunggu hingga proses selesai.
+---
 
-***
+### 2️⃣ Instalasi Paket dan Buat Direktori Musik
 
-### 2️⃣ Instalasi Paket
-
-Install semua paket yang dibutuhkan sekaligus:
+Setelah repository diperbarui, **instal paket** yang dibutuhkan untuk menjalankan MPD, Samba, dan Snapserver dengan perintah berikut:
 
 ```bash
 apt-get install mpd snapserver samba
 ```
 
-Setelah selesai, buat direktori untuk menyimpan file musik:
+Setelah proses instalasi selesai, buat direktori khusus untuk menyimpan file musik yang akan diputar oleh server. Pada contoh ini, direktori yang digunakan adalah **/etc/music**, namun direktori lain juga bisa digunakan selama **konsisten** dengan konfigurasi MPD. **Tapi jika tidak ingin pusing samakan saja dengan punya saya**.
 
 ```bash
 mkdir /etc/music
 ```
 
-> [!TIP]
-> Direktori lain bisa digunakan selama konsisten dengan konfigurasi MPD.
-> Namun disarankan **samakan saja** dengan contoh di atas agar tidak kebingungan.
-
-***
+---
 
 ### 3️⃣ Atur Permission Direktori Musik
+
+Setelah direktori dibuat, atur **permission** agar direktori tersebut dapat **diakses** oleh service MPD dengan benar. Pengaturan hak akses ini penting agar MPD dapat membaca file musik tanpa kendala.
+
+> [!CAUTION]
+> **PERINTAHNYA WAJIB SAMA DENGAN PUNYA SAYA!!**
 
 ```bash
 chown -R mpd:audio /etc/music
 chmod -R 775 /etc/music
 ```
 
-> [!CAUTION]
-> **Perintahnya wajib sama persis seperti di atas!**
+---
 
-***
+### 4️⃣ Konfigurasi Samba untuk Transfer File Musik
 
-### 4️⃣ Konfigurasi Samba
+Selanjutnya, **pindahkan** file musik dari laptop ke server. Untuk mempermudah proses transfer file, digunakan **Samba** sebagai media berbagi folder.
 
-Buka file konfigurasi Samba:
+Setelah Samba terpasang, buka file konfigurasi dengan perintah berikut:
 
 ```bash
 nano /etc/samba/smb.conf
 ```
 
-Tambahkan konfigurasi berikut di **baris paling bawah** file:
+Pada file ini di **baris paling bawah**, lakukan pengaturan share folder sesuai konfigurasi yang sudah ditentukan:
 
 ```ini
 [music]
    path = /etc/music
    browseable = yes
-   read only = no
+   writeable = yes
    guest ok = yes
-   force user = root
 ```
 
 > [!CAUTION]
-> **Konfigurasi ini wajib sama persis seperti di atas!**
+> **KONFIGURASINYA WAJIB SAMA DENGAN YANG ADA DI ATAS!!**
 
-Simpan dengan **`CTRL + O`** → **`Enter`**, lalu restart Samba:
+Setelah selesai, **simpan file** konfigurasi dengan menekan **CTRL + O**, lalu tekan **Enter** untuk menyimpan perubahan. Setelah itu, restart service Samba agar konfigurasi baru diterapkan.
 
 ```bash
 systemctl restart smbd
 ```
 
-***
+---
 
-### 5️⃣ Transfer File Musik via Samba
+### 5️⃣ Transfer File Musik ke Server
 
-Dari Laptop atau Komputer Windows:
+Setelah Samba di-restart, masuk ke **Laptop atau Komputer** anda lalu klik tombol **Windows + R**, lalu ketik IP dari Armbian Server anda, misal punya saya **\\\\172.16.100.178**, lalu Enter. Setelah itu coba kalian lihat apakah ada **folder** bernama **music** atau tidak. Jika sudah ada, **pindahkan** lagu yang kalian miliki di Laptop atau Komputer kalian ke dalam folder music itu.
 
-1. Tekan **`Windows + R`**
-
-2. Ketik IP server, contoh:
-   ```
-   \\172.16.100.238
-   ```
-
-3. Cari folder bernama **`music`**
-
-4. Pindahkan file lagu dari komputer ke dalam folder tersebut
-
-***
+---
 
 ### 6️⃣ Konfigurasi MPD
 
-Buka file konfigurasi MPD:
+Setelah file musik berhasil dipindahkan ke server, masuk kembali ke Armbian Server untuk melakukan konfigurasi MPD. Buka file konfigurasi MPD dengan perintah berikut:
 
 ```bash
 nano /etc/mpd.conf
 ```
 
-Sesuaikan pengaturan berikut (hapus tanda `#` pada baris yang perlu diaktifkan):
+Pada file ini, sesuaikan pengaturan agar sesuai dengan yang ada pada gambar berikut. Jika ada baris yang masih diberi **tanda #**, hapus tanda tersebut pada bagian yang memang perlu diaktifkan. Setelah selesai, simpan konfigurasi dengan **menekan CTRL + O, lalu tekan Enter**.
+
+> [!CAUTION]
+> **KONFIGURASINYA WAJIB SAMA SEPERTI YANG ADA DI GAMBAR!!**
 
 ```ini
-music_directory     "/etc/music"
-playlist_directory  "/var/lib/mpd/playlists"
-db_file             "/var/lib/mpd/database"
-log_file            "/var/log/mpd/mpd.log"
-pid_file            "/run/mpd/pid"
-state_file          "/var/lib/mpd/state"
+music_directory    "/etc/music"
+playlist_directory "/var/lib/mpd/playlists"
+db_file            "/var/lib/mpd/database"
+log_file           "/var/log/mpd/mpd.log"
+pid_file           "/run/mpd/pid"
+state_file         "/var/lib/mpd/state"
 
-bind_to_address     "127.0.0.1"
+bind_to_address    "127.0.0.1"
 
 audio_output {
     type       "fifo"
@@ -149,53 +144,77 @@ audio_output {
 }
 ```
 
-> [!CAUTION]
-> **Konfigurasi ini wajib sama persis seperti di atas!**
+---
 
-Simpan dengan **`CTRL + O`** → **`Enter`**, lalu restart MPD:
+### 7️⃣ Restart MPD
+
+Setelah konfigurasi, selanjutnya **restart** MPD dengan perintah berikut:
 
 ```bash
 systemctl restart mpd.service
 ```
 
-***
+---
 
-### 7️⃣ Konfigurasi Snapserver
+### 8️⃣ Konfigurasi Snapserver
 
-Buka file konfigurasi Snapserver:
+Langkah berikutnya adalah mengonfigurasi Snapserver. Buka file konfigurasi Snapserver dengan perintah berikut:
 
 ```bash
 nano /etc/snapserver.conf
 ```
 
-Cari bagian `[stream]` dan sesuaikan (hapus tanda `#` jika ada):
+Pada file ini, sesuaikan konfigurasi stream agar Snapserver membaca audio dari source yang benar. Karena urutan konfigurasi pada file ini tidak selalu sama, maka perlu mencari bagian yang sesuai satu per satu. Jika ada tanda # pada baris yang diperlukan, hapus tanda tersebut.
+
+> [!CAUTION]
+> **KONFIGURASINYA WAJIB SAMA SEPERTI YANG ADA DI GAMBAR!!**
+
+**📡 Bagian `[stream]`** — sumber audio dari FIFO pipe MPD:
 
 ```ini
 [stream]
-stream = pipe:///tmp/snapfifo?name=default&sampleformat=48000:16:2&codec=pcm
+source = pipe:///tmp/snapfifo?name=MPD&mode=read&sampleformat=48000:16:2
+source = tcp://127.0.0.1:1234?name=Paging&sampleformat=44100:16:1
+source = meta:///MPD/Paging?name=Auto_Paging&mode=prioritized
 ```
 
-> [!CAUTION]
-> **Konfigurasi ini wajib sama persis seperti di atas!**
-> Urutan baris di file ini tidak selalu sama — cari bagian yang sesuai **satu per satu**.
+**🌐 Bagian `[http]`** — mengaktifkan JSON-RPC via HTTP untuk kontrol web:
 
-Simpan dengan **`CTRL + O`** → **`Enter`**, lalu restart Snapserver:
+```ini
+[http]
+enabled = true
+port = 1780
+```
+
+**🔌 Bagian `[tcp]`** — mengaktifkan JSON-RPC via TCP untuk kontrol socket:
+
+```ini
+[tcp]
+enabled = true
+port = 1705
+```
+
+---
+
+### 9️⃣ Simpan dan Restart Snapserver
+
+Setelah konfigurasi Snapserver selesai, simpan file dengan menekan **CTRL + O, lalu tekan Enter**. Setelah itu restart Snapserver dengan perintah berikut:
 
 ```bash
 systemctl restart snapserver
 ```
 
-***
+---
 
-### 8️⃣ Pengujian MPD dengan MPC
+### 🔟 Install MPC dan Test Playback
 
-Install paket `mpc`:
+Setelah MPD dan Snapserver berhasil dikonfigurasi, lakukan pengujian dengan **menambahkan** musik ke MPD. Sebelum itu, instal paket **mpc** terlebih dahulu:
 
 ```bash
 apt-get install mpc
 ```
 
-Jalankan perintah berikut **secara urut satu per satu**:
+Setelah terinstall, selanjutnya ketik perintah satu-satu **secara urut** mulai dari atas hingga bawah seperti berikut:
 
 ```bash
 mpc update
@@ -205,41 +224,50 @@ mpc play
 ```
 
 > [!IMPORTANT]
-> Wajib memasukkan perintah dari `mpc update` sampai `mpc play` **secara berurutan dari atas ke bawah**.
+> Kalian **wajib** memasukkan perintah dari **mpc update sampai mpc play** secara berurutan dari atas ke bawah.
 
-***
+Jika lagu sudah diputar tetapi speaker belum mengeluarkan suara, maka tahap berikutnya adalah melakukan konfigurasi pada sisi **Snapclient** di Armbian Client.
 
-### 9️⃣ Konfigurasi Service Paging
+---
 
-**Paging** adalah sistem penyiaran pengumuman suara satu arah dari server ke banyak speaker client secara bersamaan.
+### 1️⃣1️⃣ Konfigurasi Service Paging (audio-paging.service)
 
-Buat file service:
+Setelah tes menggunakan perintah `mpc play` sudah berhasil memutar musik, selanjutnya kita akan mulai konfigurasi untuk **paging**. **Paging** (sering juga disebut *Public Address System* atau PA System) adalah **sistem penyiaran pengumuman suara satu arah** dari sebuah titik pusat kontrol (mikrofon/server) ke satu atau banyak titik speaker (client) secara bersamaan.
+
+Untuk konfigurasi paging, pertama kita akan membuat service yang akan dijalankan terus menerus untuk mengaktifkan fitur paging. Ketik perintah berikut:
 
 ```bash
 nano /etc/systemd/system/audio-paging.service
 ```
 
-Isi dengan konfigurasi berikut:
+Isi konfigurasinya seperti berikut:
+
+> [!CAUTION]
+> **KONFIGURASINYA WAJIB SAMA SEPERTI PADA GAMBAR!**
 
 ```ini
 [Unit]
-Description=Audio Paging Service
-After=network.target snapserver.service
+Description=Running Paging
+After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/arecord -D default -f cd -t raw | /usr/bin/snapcast-paging
+ExecStart=/bin/bash -c "arecord -D plughw:CARD=Device,DEV=0 -r 44100 -f S16_LE -c 1 | nc 127.0.0.1 1234"
 Restart=always
 RestartSec=5
 User=root
+Group=root
+Type=simple
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=paging
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-> [!CAUTION]
-> **Konfigurasi ini wajib sama persis seperti pada gambar di dokumentasi asli!**
+Setelah dikonfigurasi seperti pada gambar, selanjutnya klik tombol **CTRL + O**, lalu **Enter** untuk menyimpan file konfigurasi.
 
-Simpan, lalu aktifkan service:
+Setelah mengkonfigurasi file **audio-paging.service**, selanjutnya **restart** system dan **aktifkan** service audio-paging yang baru saja kita buat. Ketik perintah secara berurutan seperti berikut:
 
 ```bash
 systemctl daemon-reload
@@ -247,20 +275,36 @@ systemctl enable audio-paging.service
 systemctl start audio-paging.service
 ```
 
-***
+---
 
-### 🔟 Konfigurasi Service Musik Background
+### 1️⃣2️⃣ Konfigurasi Service Musik Background (audio-music.service)
 
-Buat satu service lagi untuk musik background:
+Setelah mengaktifkan service audio-paging, selanjutnya kita akan membuat satu service lagi untuk menjalankan musik di latar belakang (daemon). Cara untuk membuatnya sama seperti membuat service audio-paging, yang berbeda hanya nama file dan isi dari konfigurasinya. Untuk service ini beri nama **audio-music.service**:
 
 ```bash
 nano /etc/systemd/system/audio-music.service
 ```
 
 > [!CAUTION]
-> **Konfigurasi ini wajib sama persis seperti pada gambar di dokumentasi asli!**
+> **KONFIGURASINYA WAJIB SAMA SEPERTI PADA GAMBAR!**
 
-Aktifkan service:
+```ini
+[Unit]
+Description=Automated MPD Music Player Service
+After=network.target mpd.service snapserver.service
+Requires=mpd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/bash -c "mpc update && mpc clear && mpc add / && mpc repeat on && mpc play"
+ExecStop=/usr/bin/mpc stop
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Setelah dikonfigurasi, selanjutnya restart system dan aktifkan service yang baru saja kita buat seperti sebelumnya:
 
 ```bash
 systemctl daemon-reload
@@ -268,39 +312,80 @@ systemctl enable audio-music.service
 systemctl start audio-music.service
 ```
 
-***
+---
 
-### 1️⃣1️⃣ Menjalankan Web App
+### 1️⃣3️⃣ Integrasi dengan Web App
 
-Pindahkan folder website ke `/opt/`:
+Setelah membuat audio-paging.service dan audio-music.service, selanjutnya kita akan mengintegrasikan MPD dan Snapserver kita dengan website, agar audionya bisa dikontrol dari website.
+
+Sebelum mengintegrasikan web, kita harus meng-clone terlebih dahulu repository website yang sudah disediakan. Jika kalian ingin membuat website sendiri bebas, tapi kalau tidak mau pusing gunakan repository saya saja.
+
+#### 📦 Install Git Terlebih Dahulu
+
+Sebelum melakukan clone repository, pastikan Git sudah terinstall di sistem operasi Armbian.
+
+Kalau belum, install Git terlebih dahulu dengan perintah berikut:
 
 ```bash
-mv /etc/music/web-audio /opt/web-audio
-cd /opt/web-audio
+apt-get install git -y
 ```
 
-Install Python dan jalankan aplikasi:
+Jika kalian ingin penjelasan yang lebih lengkap tentang cara install Git di Debian, kalian bisa mengarah ke dokumentasi berikut:
+
+[**Cara Install Git di Debian**](https://www.digitalocean.com/community/tutorials/how-to-install-git-on-debian-10)
+
+#### 🔁 Clone Repository Website
+
+Setelah Git terinstall, selanjutnya clone repository website ke dalam Armbian kita melalui terminal:
+
+```bash
+cd /opt
+git clone https://github.com/alvinnes/web-audio-snapcast.git
+```
+
+Setelah repository berhasil di-clone, selanjutnya masuk ke dalam folder hasil clone tersebut:
+
+```bash
+cd /opt/web-audio-snapcast
+```
+
+Kalau nama folder hasil clone berbeda, sesuaikan dengan nama repository kalian.
+
+Setelah repository berhasil di-clone, selanjutnya pindahkan folder website tadi ke dalam folder opt jika memang sebelumnya masih berada di folder lain. Kalau repository sudah langsung di-clone ke `/opt`, maka langkah pemindahan ini bisa diabaikan.
+
+Sebelum menjalankan aplikasi, pastikan bahasa pemrograman **Python 3** beserta modul environment-nya telah terpasang di sistem operasi:
 
 ```bash
 sudo apt install python3 python3-venv python3-pip -y
+```
+
+Aktifkan virtual environment:
+
+```bash
 source .venv/bin/activate
-python3 app.py
 ```
 
 > [!IMPORTANT]
-> Di dalam folder project terdapat beberapa file script Python seperti `music.py`.
-> **Abaikan semua file tersebut.**
-> Satu-satunya file yang perlu dijalankan adalah **`app.py`**.
+> Di dalam folder project terdapat beberapa file script Python seperti `music.py` dan lainnya.
+> **Abaikan semua file tersebut.** Satu-satunya file yang perlu dijalankan adalah **`app.py`**.
 
-Buka browser dan akses:
+Terakhir, jalankan layanan website:
 
+```bash
+python3 app.py
 ```
-http://<IP_SERVER>:5000
+
+Setelah mengetik perintah tersebut, akan muncul tulisan seperti berikut:
+
+```text
+* Running on http://172.16.100.178:5000
 ```
 
-Lakukan pengujian upload lagu, play lagu, dan fitur lainnya.
+Setelah muncul tampilan seperti itu, fokus ke bagian **Running on http://172.16.100.178:5000**. Buka browser di laptop anda, lalu masukkan IP tersebut ke pencarian, maka nanti akan muncul tampilan website.
 
-***
+Setelah muncul tampilan website, selanjutnya coba kalian tes **upload lagu**, **play lagu**, dan **fitur-fitur lainnya**. Jika semua fitur sudah bisa berjalan maka konfigurasi Snapserver sudah selesai sampai disini saja.
+
+---
 
 <div align="center">
 
